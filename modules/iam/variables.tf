@@ -1,29 +1,29 @@
-variable "project_name" {
-  description = "Name of the Project"
-  type = string
+variable "project" {
+  description = "Project name"
+  type        = string
 }
 
-variable "env_name" {
-  description = "Name of the environment"
-  type = string
+variable "env" {
+  description = "Environment name (dev, qa, prod)"
+  type        = string
 }
 
 variable "oidc_provider_arn" {
-  description = "ARN of the EKS OIDC Provider"
-  type = string
+  description = "ARN of the EKS OIDC provider"
+  type        = string
 }
 
-varibale "oidc_provider_url" {
-  description = "URL of the EKS OIDC Provider"
-  type = string
+variable "oidc_provider_url" {
+  description = "URL of the EKS OIDC provider"
+  type        = string
 }
 
 variable "aws_account_id" {
-  descriotion = "AWS Account ID"
-  type = string
+  description = "AWS Account ID"
+  type        = string
 }
 
 variable "github_org" {
-  description = "GitHub username"
-  type = string
+  description = "GitHub organization or username that owns frontend and backend"
+  type        = string
 }
