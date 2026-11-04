@@ -8,12 +8,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'envs/dev/**'
+      - 'env/dev/**'
       - 'modules/**'
   pull_request:
     branches: [main]
     paths:
-      - 'envs/dev/**'
+      - 'env/dev/**'
       - 'modules/**'
   workflow_dispatch:
     inputs:
@@ -33,7 +33,7 @@ permissions:
 
 env:
   TF_VERSION: '1.15.6'
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-south-1
 
 # Prevent parallel runs on the same branch — avoids state conflicts
 concurrency:
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: envs/dev
+        working-directory: env/dev
 
     steps:
       - uses: actions/checkout@v5
@@ -102,7 +102,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: tfplan
-          path: envs/dev/tfplan
+          path: env/dev/tfplan
           retention-days: 1
 
   # ── Apply ─────────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ jobs:
     environment: dev   # ← pauses here and waits for manual approval
     defaults:
       run:
-        working-directory: envs/dev
+        working-directory: env/dev
 
     steps:
       - uses: actions/checkout@v5
@@ -140,7 +140,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: tfplan
-          path: envs/dev
+          path: env/dev
 
       - name: Terraform Apply
         run: |
@@ -165,7 +165,7 @@ jobs:
     environment: dev   # ← approval gate for destroy too
     defaults:
       run:
-        working-directory: envs/dev
+        working-directory: env/dev
 
     steps:
       - uses: actions/checkout@v5
@@ -197,4 +197,4 @@ jobs:
       - name: Release state lock on failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://${{ vars.TF_STATE_BUCKET }}/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://${{ vars.TF_STATE_BUCKET }}/env/dev/terraform.tfstate.tflock || true
