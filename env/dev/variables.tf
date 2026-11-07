@@ -17,7 +17,7 @@ variable "github_org" {
 }
 
 variable "backup_retention_period" {
-  description = "Number of days to retain backups"
+  description = "Days to retain automated RDS backups; use a short retention period for the dev free-plan account"
   type        = number
-  default     = 7
+  default     = 1
 }
