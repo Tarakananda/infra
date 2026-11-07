@@ -1,19 +1,17 @@
-variable "db_password" {
-  description = "Master password for the RDS PostgreSQL database"
+variable "project" {
+  description = "Project name"
   type        = string
-  sensitive   = true
 }
 
-variable "jwt_secret" {
-  description = "JWT signing secret for the application"
+variable "env" {
+  description = "Environment name (dev, qa, prod)"
   type        = string
-  sensitive   = true
 }
 
-variable "github_org" {
-  description = "GitHub username or organization that owns frontend and backend"
+variable "region" {
+  description = "AWS region"
   type        = string
-  default     = "zenpharma"
+  default     = "ap-south-1"
 }
 
 variable "vpc_cidr" {
@@ -38,6 +36,24 @@ variable "database_subnet_cidrs" {
   description = "CIDR blocks for database subnets (RDS)"
   type        = list(string)
   default     = ["10.0.5.0/24", "10.0.6.0/24"]
+}
+
+variable "db_password" {
+  description = "Master password for the RDS PostgreSQL database"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT signing secret for the application"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_org" {
+  description = "GitHub username or organization that owns frontend and backend"
+  type        = string
+  default     = "zenpharma"
 }
 
 variable "backup_retention_period" {

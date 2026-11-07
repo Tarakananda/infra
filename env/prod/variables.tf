@@ -1,3 +1,19 @@
+variable "project" {
+  description = "Project name"
+  type        = string
+}
+
+variable "env" {
+  description = "Environment name (dev, qa, prod)"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region"
+  type        = string
+  default     = "ap-south-1"
+}
+
 variable "db_password" {
   description = "Master password for the RDS PostgreSQL database"
   type        = string

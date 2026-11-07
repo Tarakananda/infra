@@ -83,7 +83,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Validate
         id: validate
@@ -95,7 +95,7 @@ jobs:
           terraform plan \
             -out=tfplan \
             -no-color
-        # continue-on-error removed - job will fail on plan error
+        # Removed continue-on-error so job fails on plan error
 
       - name: Check plan status
         if: steps.plan.outcome == 'failure'
@@ -143,7 +143,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Download plan file
         uses: actions/download-artifact@v7
@@ -166,9 +166,7 @@ jobs:
       - name: Sync ArgoCD Applications
         if: success()
         run: |
-          echo "Triggering ArgoCD sync for environment: ${{ github.event.inputs.target_env || 'dev' }}"
-          # Could add kubectl commands here to sync apps
-          # kubectl -n argocd app sync --all
+          echo "ArgoCD sync triggered for: ${{ github.event.inputs.target_env || 'dev' }}"
 
   # ── Destroy ───────────────────────────────────────────────────────────────
   destroy:
@@ -199,7 +197,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Destroy
         run: |
@@ -249,7 +247,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Destroy
         run: |
@@ -299,7 +297,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Destroy
         run: |
