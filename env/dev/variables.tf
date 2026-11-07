@@ -15,3 +15,9 @@ variable "github_org" {
   type        = string
   default     = "zenpharma"
 }
+
+variable "backup_retention_period" {
+  description = "Number of days to retain backups"
+  type        = number
+  default     = 7
+}

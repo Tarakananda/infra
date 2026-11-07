@@ -108,7 +108,7 @@ print("  Each pipeline: builds → scans → pushes image to ECR → updates git
 print()
 
 GITHUB_ORG = prompt("GITHUB_ORG",    "GitHub username or org that owns the repos",
-                    "ravdy")
+                    "")
 BRANCH     = prompt("BRANCH",        "Branch to build",
                     "develop", "develop")
 

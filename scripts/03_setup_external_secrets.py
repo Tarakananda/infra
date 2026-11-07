@@ -204,10 +204,8 @@ run_cmd([
     "--timeout=60s",
 ])
 
-# Clear kubectl discovery cache so newly registered CRD types are visible
-discovery_cache = os.path.expanduser("~/.kube/cache/discovery")
-if os.path.isdir(discovery_cache):
-    shutil.rmtree(discovery_cache)
+# No aggressive cache cleanup needed - CRD establishment wait handles this
+# The kubectl wait command below ensures CRDs are established before use
 
 print()
 print("--------------------------------------------")
@@ -261,14 +259,6 @@ spec:
         key: /pharma/{ENV}/db-credentials
         property: username
     - secretKey: DB_PASSWORD
-      remoteRef:
-        key: /pharma/{ENV}/db-credentials
-        property: password
-    - secretKey: SPRING_DATASOURCE_USERNAME
-      remoteRef:
-        key: /pharma/{ENV}/db-credentials
-        property: username
-    - secretKey: SPRING_DATASOURCE_PASSWORD
       remoteRef:
         key: /pharma/{ENV}/db-credentials
         property: password

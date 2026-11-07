@@ -12,7 +12,6 @@ module "eks" {
   endpoint_public_access  = true
 
   enable_irsa                              = true
-  enable_cluster_creator_admin_permissions = true
 
   addons = {
     vpc-cni = {
@@ -40,19 +39,6 @@ module "eks" {
 
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  access_entries = {
-    tarakananda = {
-      principal_arn = "arn:aws:iam::721274598133:user/tarakananda"
-
-      policy_associations = {
-        admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-
-          access_scope = {
-            type = "cluster"
-          }
-        }
-      }
-    }
-  }
+  # access_entries removed - OIDC user ARN should be configured per-organization
+  # If needed, add access_entries with parameterized ARNs in the environment config
 }

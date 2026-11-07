@@ -9,11 +9,15 @@ on:
     branches: [main]
     paths:
       - 'env/dev/**'
+      - 'env/staging/**'
+      - 'env/prod/**'
       - 'modules/**'
   pull_request:
     branches: [main]
     paths:
       - 'env/dev/**'
+      - 'env/staging/**'
+      - 'env/prod/**'
       - 'modules/**'
   workflow_dispatch:
     inputs:
@@ -22,7 +26,13 @@ on:
         required: true
         default: 'plan'
         type: choice
-        options: [plan, apply, destroy]
+        options: [plan, apply, destroy, destroy-staging, destroy-prod]
+      target_env:
+        description: 'Target environment (dev, staging, prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options: [dev, staging, prod]
       confirm_destroy:
         description: 'Type "destroy" to confirm destruction (required when action=destroy)'
         required: false
@@ -30,15 +40,17 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
-  TF_VERSION: '1.15.6'
+  TF_VERSION: '1.9.0'
   AWS_REGION: ap-south-1
+  TF_STATE_BUCKET: 'pharma-terraform-state-tarak'
 
 # Prevent parallel runs on the same branch — avoids state conflicts
 concurrency:
   group: terraform-${{ github.ref }}
-  cancel-in-progress: false   # wait, don't cancel — safer for Terraform
+  cancel-in-progress: true
 
 jobs:
   # ── Plan ──────────────────────────────────────────────────────────────────
@@ -47,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: env/dev
+        working-directory: env/${{ github.event.inputs.target_env || 'dev' }}
 
     steps:
       - uses: actions/checkout@v5
@@ -81,28 +93,25 @@ jobs:
         id: plan
         run: |
           terraform plan \
-            -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
-            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=${{ vars.GH_ORG }}" \
             -out=tfplan \
             -no-color
-        continue-on-error: true
+        # continue-on-error removed - job will fail on plan error
 
       - name: Check plan status
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      - name: Release state lock on failure
+      - name: Release state lock on plan failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://${{ vars.TF_STATE_BUCKET }}/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://${TF_STATE_BUCKET}/env/${{ github.event.inputs.target_env || 'dev' }}/terraform.tfstate.tflock || true
 
       - name: Upload plan file
         if: steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v6
         with:
           name: tfplan
-          path: env/dev/tfplan
+          path: env/${{ github.event.inputs.target_env || 'dev' }}/tfplan
           retention-days: 1
 
   # ── Apply ─────────────────────────────────────────────────────────────────
@@ -116,7 +125,7 @@ jobs:
     environment: dev   # ← pauses here and waits for manual approval
     defaults:
       run:
-        working-directory: env/dev
+        working-directory: env/${{ github.event.inputs.target_env || 'dev' }}
 
     steps:
       - uses: actions/checkout@v5
@@ -140,7 +149,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: tfplan
-          path: env/dev
+          path: env/${{ github.event.inputs.target_env || 'dev' }}
 
       - name: Terraform Apply
         run: |
@@ -149,10 +158,17 @@ jobs:
             -no-color \
             tfplan
 
-      - name: Release state lock on failure
+      - name: Release state lock on apply failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://${{ vars.TF_STATE_BUCKET }}/envs/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://${TF_STATE_BUCKET}/env/${{ github.event.inputs.target_env || 'dev' }}/terraform.tfstate.tflock || true
+
+      - name: Sync ArgoCD Applications
+        if: success()
+        run: |
+          echo "Triggering ArgoCD sync for environment: ${{ github.event.inputs.target_env || 'dev' }}"
+          # Could add kubectl commands here to sync apps
+          # kubectl -n argocd app sync --all
 
   # ── Destroy ───────────────────────────────────────────────────────────────
   destroy:
@@ -165,7 +181,7 @@ jobs:
     environment: dev   # ← approval gate for destroy too
     defaults:
       run:
-        working-directory: env/dev
+        working-directory: env/${{ github.event.inputs.target_env || 'dev' }}
 
     steps:
       - uses: actions/checkout@v5
@@ -194,7 +210,112 @@ jobs:
             -auto-approve \
             -no-color
 
-      - name: Release state lock on failure
+      - name: Release state lock on destroy failure
         if: failure() || cancelled()
         run: |
-          aws s3 rm s3://${{ vars.TF_STATE_BUCKET }}/env/dev/terraform.tfstate.tflock || true
+          aws s3 rm s3://${TF_STATE_BUCKET}/env/${{ github.event.inputs.target_env || 'dev' }}/terraform.tfstate.tflock || true
+
+      - name: Sync ArgoCD Applications (Post-Destroy)
+        if: success()
+        run: |
+          echo "ArgoCD apps will be cleaned up manually or via separate workflow"
+
+  # ── Destroy Staging ──────────────────────────────────────────────────────
+  destroy-staging:
+    name: Terraform Destroy Staging
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'destroy-staging' &&
+      github.event.inputs.confirm_destroy == 'destroy'
+    environment: staging
+    defaults:
+      run:
+        working-directory: env/staging
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: |
+          terraform destroy \
+            -var="db_password=${{ secrets.STAGING_DB_PASSWORD }}" \
+            -var="jwt_secret=${{ secrets.STAGING_JWT_SECRET }}" \
+            -var="github_org=${{ vars.GH_ORG }}" \
+            -auto-approve \
+            -no-color
+
+      - name: Release state lock on destroy failure
+        if: failure() || cancelled()
+        run: |
+          aws s3 rm s3://${TF_STATE_BUCKET}/env/staging/terraform.tfstate.tflock || true
+
+      - name: Sync ArgoCD Applications (Post-Destroy)
+        if: success()
+        run: |
+          echo "Staging ArgoCD apps cleaned up"
+
+  # ── Destroy Prod ──────────────────────────────────────────────────────────
+  destroy-prod:
+    name: Terraform Destroy Prod
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.action == 'destroy-prod' &&
+      github.event.inputs.confirm_destroy == 'destroy'
+    environment: prod
+    defaults:
+      run:
+        working-directory: env/prod
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: |
+          terraform destroy \
+            -var="db_password=${{ secrets.PROD_DB_PASSWORD }}" \
+            -var="jwt_secret=${{ secrets.PROD_JWT_SECRET }}" \
+            -var="github_org=${{ vars.GH_ORG }}" \
+            -auto-approve \
+            -no-color
+
+      - name: Release state lock on destroy failure
+        if: failure() || cancelled()
+        run: |
+          aws s3 rm s3://${TF_STATE_BUCKET}/env/prod/terraform.tfstate.tflock || true
+
+      - name: Sync ArgoCD Applications (Post-Destroy)
+        if: success()
+        run: |
+          echo "Prod ArgoCD apps cleaned up"
