@@ -37,4 +37,22 @@ module "eks" {
     Project = var.project
     Env     = var.env
   }
+
+  authentication_mode = "API_AND_CONFIG_MAP"
+
+  access_entries = {
+    tarakananda = {
+      principal_arn = "arn:aws:iam::721274598133:user/tarakananda"
+
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 }
