@@ -1,19 +1,3 @@
-variable "project" {
-  description = "Project name"
-  type        = string
-}
-
-variable "env" {
-  description = "Environment name (dev, qa, prod)"
-  type        = string
-}
-
-variable "region" {
-  description = "AWS region"
-  type        = string
-  default     = "ap-south-1"
-}
-
 variable "vpc_cidr" {
   description = "CIDR block for the VPC"
   type        = string

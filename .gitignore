@@ -2,9 +2,11 @@
 **/*.tfstate
 **/*.tfstate.*
 **/.terraform/
-**/.terraform.lock.hcl
+
+# Commit .terraform.lock.hcl so plan/apply use identical provider versions.
 
 # Terraform plan output
+tfplan
 *.tfplan
 *.tfplan.json
 

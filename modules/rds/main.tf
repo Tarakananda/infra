@@ -27,7 +27,7 @@ resource "aws_security_group" "rds" {
 
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "~> 7.0"
+  version = "7.2.2"
 
   identifier = "${var.project}-${var.env}-postgres"
 
