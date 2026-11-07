@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: supplier-service
+  namespace: argocd
+spec:
+  project: pharma
+  source:
+    repo: "https://github.com/zenpharma/zen-gitops.git"
+    targetRevision: main
+    path: supplier-service
+  destination:
+    namespace: dev
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

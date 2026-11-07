@@ -12,7 +12,6 @@ module "eks" {
   endpoint_public_access  = true
 
   enable_irsa                              = true
-  enable_cluster_creator_admin_permissions = true
 
   addons = {
     vpc-cni = {
@@ -37,4 +36,9 @@ module "eks" {
     Project = var.project
     Env     = var.env
   }
+
+  authentication_mode = "API_AND_CONFIG_MAP"
+
+  # access_entries removed - OIDC user ARN should be configured per-organization
+  # If needed, add access_entries with parameterized ARNs in the environment config
 }
