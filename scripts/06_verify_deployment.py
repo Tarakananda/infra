@@ -236,12 +236,12 @@ if alb_hostname:
 
     health_paths = {
         "pharma-ui":             "/",
-        "api-gateway":           "/api/actuator/health",
-        "auth-service":          "/api/auth/actuator/health",
-        "drug-catalog-service":  "/api/catalog/actuator/health",
-        "inventory-service":     "/api/inventory/actuator/health",
-        "supplier-service":      "/api/suppliers/actuator/health",
-        "manufacturing-service": "/api/manufacturing/actuator/health",
+        "api-gateway":           "/actuator/health",
+        "auth-service":          "/actuator/health",
+        "drug-catalog-service":  "/actuator/health",
+        "inventory-service":     "/actuator/health",
+        "supplier-service":      "/actuator/health",
+        "manufacturing-service": "/actuator/health",
     }
 
     base_url = f"http://{alb_hostname}"
