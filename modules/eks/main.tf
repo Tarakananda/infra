@@ -1,6 +1,6 @@
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.29.0"
 
   name               = "${var.project}-${var.env}-cluster"
   kubernetes_version = var.kubernetes_version
@@ -11,7 +11,7 @@ module "eks" {
   endpoint_private_access = true
   endpoint_public_access  = true
 
-  enable_irsa                              = true
+  enable_irsa = true
 
   addons = {
     vpc-cni = {
