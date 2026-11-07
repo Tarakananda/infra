@@ -56,6 +56,23 @@ The saved plan is retained for one day and applied using the same locked
 dependencies. Plans contain sensitive values; restrict repository/artifact
 access accordingly.
 
+## RDS backup retention and interrupted applies
+
+Dev defaults to **1 day** of automated RDS backups because this account rejected
+the previous 7-day setting with `FreeTierRestrictionError`. Staging and prod
+retain their 7-day defaults. Each root passes `backup_retention_period` to the
+RDS module, so an intentional override now takes effect. A retention period of
+0 disables automated backups; the dev default keeps them enabled with a shorter
+recovery window. Account-plan limits are checked by AWS during creation and
+may not be caught by `terraform plan`.
+
+After a partial apply, run a **new** plan and apply from the corrected commit.
+Terraform refreshes the existing state and plans the remaining work. Do not
+reuse the failed run's saved plan or destroy successfully created resources to
+retry database creation. On GitHub Actions, merging the fix starts the existing
+main/dev plan-and-apply flow; a manual `apply` with `target_env=dev` also creates
+a fresh plan first.
+
 ## State locking
 
 Runs targeting the same environment are serialized across branches, and a new
