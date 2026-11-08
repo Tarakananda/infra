@@ -3,22 +3,17 @@ kind: AppProject
 metadata:
   name: pharma
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Zen Pharma Platform
+  description: Dev practice applications
   sourceRepos:
-    - "https://github.com/zenpharma/zen-gitops.git"
+    - https://github.com/your-github-username/zen-gitops.git
   destinations:
     - namespace: dev
       server: https://kubernetes.default.svc
-    - namespace: qa
-      server: https://kubernetes.default.svc
-    - namespace: prod
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: ''
-      kind: Namespace
-  namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
+  # Namespace/quota and cluster resources are managed by the bootstrap scripts.
+  clusterResourceWhitelist: []
+  namespaceResourceBlacklist:
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: ""
+      kind: ResourceQuota

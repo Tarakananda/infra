@@ -37,8 +37,9 @@ module "rds" {
   major_engine_version = "17"
   instance_class       = var.instance_class
 
-  allocated_storage = var.allocated_storage
-  storage_type      = "gp3"
+  allocated_storage     = var.allocated_storage
+  max_allocated_storage = 0
+  storage_type          = "gp3"
 
   db_name                     = var.db_name
   username                    = var.username

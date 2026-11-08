@@ -5,6 +5,10 @@ module "eks" {
   name               = "${var.project}-${var.env}-cluster"
   kubernetes_version = var.kubernetes_version
 
+  upgrade_policy              = { support_type = "STANDARD" }
+  enabled_log_types           = []
+  create_cloudwatch_log_group = false
+
   vpc_id     = var.vpc_id
   subnet_ids = var.subnet_ids
 
@@ -29,6 +33,24 @@ module "eks" {
       min_size       = var.min_size
       max_size       = var.max_size
       desired_size   = var.desired_size
+      capacity_type  = "ON_DEMAND"
+
+      # m7i-flex.large is free-plan eligible and has no T-series CPU credit charges.
+      block_device_mappings = {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 20
+            volume_type           = "gp3"
+            encrypted             = true
+            delete_on_termination = true
+          }
+        }
+      }
+      # A practice lab accepts downtime to avoid extra nodes during upgrades.
+      update_config = { max_unavailable = 1, update_strategy = "MINIMAL" }
+      # CoreDNS/application disruption budgets cannot be satisfied on a drained single node.
+      force_update_version = true
     }
   }
 
@@ -39,6 +61,16 @@ module "eks" {
 
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  # access_entries removed - OIDC user ARN should be configured per-organization
-  # If needed, add access_entries with parameterized ARNs in the environment config
+  enable_cluster_creator_admin_permissions = true
+  access_entries = {
+    for arn in var.admin_principal_arns : arn => {
+      principal_arn = arn
+      policy_associations = {
+        admin = {
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
+        }
+      }
+    }
+  }
 }

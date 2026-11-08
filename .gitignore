@@ -36,3 +36,7 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+
+# Python runtime cache
+__pycache__/
+*.py[cod]

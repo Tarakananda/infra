@@ -1,0 +1,19 @@
+# Small, single-node practice installation. Access with kubectl port-forward.
+server:
+  replicas: 1
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+controller:
+  replicas: 1
+repoServer:
+  replicas: 1
+redis-ha:
+  enabled: false
+dex:
+  enabled: false
+applicationSet:
+  enabled: false
+notifications:
+  enabled: false
