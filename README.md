@@ -7,8 +7,8 @@ billable infrastructure automatically.
 
 ## Cost target: below $0.50/hour for light practice
 
-The configured idle baseline is approximately **$0.285/hour**, rounded to
-**$0.29/hour before tax and usage charges**. This is an estimate, not an AWS
+The configured idle baseline is approximately **$0.296/hour**, rounded to
+**$0.30/hour before tax and usage charges**. This is an estimate, not an AWS
 spending cap. No free-tier credits, reservations or Spot discounts are assumed.
 Prices were checked on 8 November 2026; monthly storage/key/secret prices below
 are divided by 730 hours to make the comparison consistent.
@@ -16,19 +16,20 @@ are divided by 730 hours to make the comparison consistent.
 | Resource | Dev configuration | Estimated USD/hour |
 | --- | --- | ---: |
 | EKS control plane | Kubernetes 1.36, STANDARD support | 0.1000 |
-| Worker | 1 × t3.large, on-demand, 2 vCPU / 8 GiB | 0.0896 |
+| Worker | 1 × m7i-flex.large, on-demand, 2 vCPU / 8 GiB | 0.10075 |
 | NAT gateway | 1 gateway for private nodes | 0.0560 |
 | Public IPv4 | 1 NAT Elastic IP | 0.0050 |
 | RDS PostgreSQL | 1 × db.t3.micro, single AZ | 0.0260 |
 | Worker storage | 20 GiB gp3 at $0.0912/GiB-month | 0.0025 |
 | Database storage | 20 GiB gp3 at $0.131/GiB-month | 0.0036 |
 | KMS key + Secrets Manager | 1 key + 2 secrets | 0.0025 |
-| **Baseline** | | **0.2852** |
+| **Baseline** | | **0.2963** |
 
 Sources: [EKS pricing](https://aws.amazon.com/eks/pricing/),
 [AWS Mumbai EC2/EBS/NAT price list](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.csv),
 [AWS Mumbai RDS price list](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json),
 [AWS Mumbai IPv4 price list](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/current/ap-south-1/index.json),
+[free-plan instance eligibility](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html),
 [KMS pricing](https://aws.amazon.com/kms/pricing/),
 [Secrets Manager pricing](https://aws.amazon.com/secrets-manager/pricing/).
 
@@ -36,7 +37,7 @@ NAT processing ($0.056/GB), internet/cross-AZ transfer, RDS burst CPU credits,
 ECR image storage, S3 state/version storage and API requests are additional.
 RDS T3 uses unlimited CPU credits; sustained database load can add charges.
 Taxes and resources elsewhere in your AWS account are also outside the baseline.
-The remaining ~$0.21/hour is headroom, not a guaranteed allowance. AWS Budgets
+The remaining ~$0.20/hour is headroom, not a guaranteed allowance. AWS Budgets
 alerts are delayed and do not impose a real-time $0.50/hour cap. If you need an
 absolute spending ceiling, this metered AWS deployment cannot guarantee it.
 
@@ -47,10 +48,12 @@ Cost controls included here:
   disables paid extended support. AWS will eventually auto-upgrade the control
   plane; review this version pin, worker version and add-ons before **2 August
   2027**, the published end of standard support. CI blocks an expired profile.
-- Worker minimum, desired and maximum are all **1**. EC2 CPU credits use
-  `standard` mode, which throttles after credits run out instead of charging
-  for unlimited credits. `MINIMAL` updates avoid extra upgrade nodes and cause
-  downtime in this single-node lab. There is no cluster autoscaler or Fargate.
+- Worker minimum, desired and maximum are all **1**. The M7i-flex worker has
+  no T-series CPU credit surcharges and is on the current free-plan eligible
+  instance list. `MINIMAL` updates avoid extra upgrade nodes and cause
+  downtime in this single-node lab. Node version updates may force eviction when
+  disruption budgets block draining the only node. There is no cluster autoscaler
+  or Fargate.
 - One 20 GiB worker disk; one 20 GiB database with storage autoscaling disabled.
   RDS keeps **one day** of automated backups, preserving the fix for this
   account's `FreeTierRestrictionError`.

@@ -40,13 +40,13 @@ def check_plan(plan, today=None):
     expect(cluster.get("upgrade_policy") == [{"support_type": "STANDARD"}], "EKS extended support must be disabled.")
     expect(not cluster.get("enabled_cluster_log_types"), "Control-plane log ingestion is outside this practice estimate.")
     nodes = exactly_one("aws_eks_node_group")
-    expect(nodes.get("instance_types") == ["t3.large"], "Use one t3.large worker.")
+    expect(nodes.get("instance_types") == ["m7i-flex.large"], "Use one m7i-flex.large worker.")
     expect(nodes.get("capacity_type") == "ON_DEMAND", "The estimate uses on-demand workers.")
     expect(nodes.get("scaling_config") == [{"desired_size": 1, "min_size": 1, "max_size": 1}], "Worker min/desired/max must all be one.")
     update = nodes.get("update_config") or [{}]
     expect(update[0].get("update_strategy") == "MINIMAL", "Use MINIMAL node updates to avoid temporary surge capacity.")
     launch = exactly_one("aws_launch_template")
-    expect(launch.get("credit_specification") == [{"cpu_credits": "standard"}], "Worker CPU credits must be standard.")
+    expect(not launch.get("credit_specification"), "Do not set T-series CPU credits on an M7i-flex worker.")
     disks = launch.get("block_device_mappings") or []
     disk = (disks[0].get("ebs") or [{}])[0] if len(disks) == 1 else {}
     expect(disk.get("volume_size") == 20 and disk.get("volume_type") == "gp3", "Use one 20 GiB gp3 worker disk.")
@@ -66,9 +66,15 @@ def check_plan(plan, today=None):
         if item["type"] == "aws_vpc_endpoint":
             expect(item["values"].get("vpc_endpoint_type") == "Gateway", "Paid interface endpoints are outside the estimate.")
     expect(sum(r["type"] == "aws_ecr_repository" for r in items) <= 9, "Review registry storage before adding more repositories.")
-    # Catch accidental dev replacements (including an attempted multi-minor upgrade).
+    # Catch accidental dev replacements and upgrades AWS cannot apply directly.
     for change in plan.get("resource_changes", []):
         actions = change.get("change", {}).get("actions", [])
+        if change["type"] == "aws_eks_cluster" and actions == ["update"]:
+            before = change["change"].get("before", {}).get("version")
+            after = change["change"].get("after", {}).get("version")
+            if before and after and before != after:
+                expect(int(after.split(".")[1]) - int(before.split(".")[1]) == 1,
+                       "An existing EKS cluster must be upgraded one minor at a time; review the migration before applying.")
         if "create" in actions and "delete" in actions and change["type"] in {
                 "aws_eks_cluster", "aws_eks_node_group", "aws_db_instance", "aws_nat_gateway"}:
             errors.append(f"Review replacement and temporary cost before applying {change['address']}.")
@@ -81,7 +87,7 @@ def main():
         for error in errors:
             print("Practice profile check failed: " + error, file=sys.stderr)
         return 1
-    print("Practice capacity checks passed. Estimated idle baseline: about $0.29/hour before tax.")
+    print("Practice capacity checks passed. Estimated idle baseline: about $0.30/hour before tax.")
     print("Traffic, RDS CPU credits, registry/storage/API usage and other account resources are additional; this is not a billing cap.")
     return 0
 

@@ -28,7 +28,7 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
   # 1.36 is in standard support; extended support costs more than this lab's budget.
   kubernetes_version   = "1.36"
-  instance_types       = ["t3.large"]
+  instance_types       = ["m7i-flex.large"]
   min_size             = 1
   max_size             = 1
   desired_size         = 1

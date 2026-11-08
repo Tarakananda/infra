@@ -11,10 +11,10 @@ from check_practice_plan import check_plan
 def fixture():
     values = {
         'aws_eks_cluster': {'name': 'pharma-dev-cluster', 'version': '1.36', 'upgrade_policy': [{'support_type': 'STANDARD'}]},
-        'aws_eks_node_group': {'instance_types': ['t3.large'], 'capacity_type': 'ON_DEMAND',
+        'aws_eks_node_group': {'instance_types': ['m7i-flex.large'], 'capacity_type': 'ON_DEMAND',
                                'scaling_config': [{'desired_size': 1, 'min_size': 1, 'max_size': 1}],
                                'update_config': [{'update_strategy': 'MINIMAL', 'max_unavailable': 1}]},
-        'aws_launch_template': {'credit_specification': [{'cpu_credits': 'standard'}],
+        'aws_launch_template': {'credit_specification': [],
                                 'block_device_mappings': [{'ebs': [{'volume_size': 20, 'volume_type': 'gp3'}]}]},
         'aws_db_instance': {'identifier': 'pharma-dev-postgres', 'instance_class': 'db.t3.micro', 'multi_az': False,
                             'allocated_storage': 20, 'max_allocated_storage': 0, 'storage_type': 'gp3',
@@ -51,8 +51,8 @@ class PracticePlanTests(unittest.TestCase):
         self.values('aws_eks_node_group')['scaling_config'][0]['max_size'] = 4
         self.assertTrue(self.check())
 
-    def test_cpu_surplus_charges_are_rejected(self):
-        self.values('aws_launch_template')['credit_specification'][0]['cpu_credits'] = 'unlimited'
+    def test_incompatible_cpu_credit_settings_are_rejected(self):
+        self.values('aws_launch_template')['credit_specification'] = [{'cpu_credits': 'unlimited'}]
         self.assertTrue(self.check())
 
     def test_multiple_nat_gateways_are_rejected(self):
@@ -78,6 +78,12 @@ class PracticePlanTests(unittest.TestCase):
     def test_replacement_requires_review(self):
         self.plan['resource_changes'] = [{'type': 'aws_eks_node_group', 'address': 'module.eks.nodes',
                                           'change': {'actions': ['create', 'delete']}}]
+        self.assertTrue(self.check())
+
+    def test_recreated_old_cluster_cannot_skip_minor_upgrades(self):
+        self.plan['resource_changes'] = [{'type': 'aws_eks_cluster', 'address': 'module.eks.cluster',
+                                          'change': {'actions': ['update'], 'before': {'version': '1.33'},
+                                                     'after': {'version': '1.36'}}}]
         self.assertTrue(self.check())
 
     def test_other_environment_or_region_is_rejected(self):

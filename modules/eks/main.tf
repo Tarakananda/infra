@@ -35,8 +35,7 @@ module "eks" {
       desired_size   = var.desired_size
       capacity_type  = "ON_DEMAND"
 
-      # Standard CPU credits prevent unlimited-mode CPU surplus charges.
-      credit_specification = { cpu_credits = "standard" }
+      # m7i-flex.large is free-plan eligible and has no T-series CPU credit charges.
       block_device_mappings = {
         root = {
           device_name = "/dev/xvda"
@@ -50,6 +49,8 @@ module "eks" {
       }
       # A practice lab accepts downtime to avoid extra nodes during upgrades.
       update_config = { max_unavailable = 1, update_strategy = "MINIMAL" }
+      # CoreDNS/application disruption budgets cannot be satisfied on a drained single node.
+      force_update_version = true
     }
   }
 
