@@ -4,7 +4,7 @@ variable "project" {
 }
 
 variable "env" {
-  description = "Environment name (dev, qa, prod)"
+  description = "Environment name (dev practice only)"
   type        = string
 }
 
@@ -21,19 +21,19 @@ variable "subnet_ids" {
 variable "kubernetes_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.36"
 }
 
 variable "instance_types" {
   description = "EC2 instance types for the node group"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.large"]
 }
 
 variable "desired_size" {
   description = "Desired number of worker nodes"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "min_size" {
@@ -45,5 +45,11 @@ variable "min_size" {
 variable "max_size" {
   description = "Maximum number of worker nodes"
   type        = number
-  default     = 3
+  default     = 1
+}
+
+variable "admin_principal_arns" {
+  description = "Additional IAM principals with dev cluster administrator access"
+  type        = set(string)
+  default     = []
 }

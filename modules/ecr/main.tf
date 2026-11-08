@@ -3,6 +3,8 @@ resource "aws_ecr_repository" "main" {
 
   name                 = each.value
   image_tag_mutability = "MUTABLE"
+  # Manual lab destroy also removes practice images so repositories do not block teardown.
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -23,11 +25,11 @@ resource "aws_ecr_lifecycle_policy" "main" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 images"
+        description  = "Keep last 3 practice images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 10
+          countNumber = 3
         }
         action = {
           type = "expire"

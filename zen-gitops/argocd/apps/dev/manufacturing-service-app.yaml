@@ -6,7 +6,7 @@ metadata:
 spec:
   project: pharma
   source:
-    repo: "https://github.com/zenpharma/zen-gitops.git"
+    repoURL: "https://github.com/your-github-username/zen-gitops.git"
     targetRevision: main
     path: manufacturing-service
   destination:

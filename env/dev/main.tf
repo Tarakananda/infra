@@ -22,15 +22,17 @@ module "vpc" {
 module "eks" {
   source = "../../modules/eks"
 
-  project            = local.project
-  env                = local.env
-  vpc_id             = module.vpc.vpc_id
-  subnet_ids         = module.vpc.private_subnets
-  kubernetes_version = "1.33"
-  instance_types     = ["t3.small"]
-  min_size           = 1
-  max_size           = 4
-  desired_size       = 3
+  project    = local.project
+  env        = local.env
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  # 1.36 is in standard support; extended support costs more than this lab's budget.
+  kubernetes_version   = "1.36"
+  instance_types       = ["t3.large"]
+  min_size             = 1
+  max_size             = 1
+  desired_size         = 1
+  admin_principal_arns = var.eks_admin_principal_arns
 }
 
 module "rds" {

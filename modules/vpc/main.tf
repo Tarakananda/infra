@@ -30,3 +30,16 @@ module "vpc" {
     Env     = var.env
   }
 }
+
+# ECR image layers in regional S3 bypass NAT processing; gateway endpoints are free.
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = module.vpc.private_route_table_ids
+  tags = {
+    Name    = "${var.project}-${var.env}-s3"
+    Project = var.project
+    Env     = var.env
+  }
+}
