@@ -86,10 +86,13 @@ class PracticePlanTests(unittest.TestCase):
                                                      'after': {'version': '1.36'}}}]
         self.assertTrue(self.check())
 
-    def test_other_environment_or_region_is_rejected(self):
+    def test_other_environment_is_rejected(self):
         self.values('aws_eks_cluster')['name'] = 'pharma-prod-cluster'
-        self.plan['configuration']['provider_config']['aws']['expressions']['region']['constant_value'] = 'ap-south-1'
-        self.assertGreaterEqual(len(self.check()), 2)
+        self.assertEqual(self.check(), ['Only the dev cluster is allowed.'])
+
+    def test_other_region_is_rejected(self):
+        self.plan['configuration']['provider_config']['aws']['expressions']['region']['constant_value'] = 'us-east-1'
+        self.assertEqual(self.check(), ['Use the reviewed ap-south-1 region.'])
 
     def test_empty_plan_is_not_treated_as_in_budget(self):
         self.plan['planned_values'] = {}
