@@ -11,4 +11,4 @@ metadata:
 spec:
   hard:
     services.loadbalancers: "0"
-    count/ingresses.networking.k8s.io: "0"
+    count/ingresses.networking.k8s.io: "1"
