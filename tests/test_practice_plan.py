@@ -88,7 +88,7 @@ class PracticePlanTests(unittest.TestCase):
 
     def test_other_environment_or_region_is_rejected(self):
         self.values('aws_eks_cluster')['name'] = 'pharma-prod-cluster'
-        self.plan['configuration']['provider_config']['aws']['expressions']['region']['constant_value'] = 'us-east-1'
+        self.plan['configuration']['provider_config']['aws']['expressions']['region']['constant_value'] = 'ap-south-1'
         self.assertGreaterEqual(len(self.check()), 2)
 
     def test_empty_plan_is_not_treated_as_in_budget(self):

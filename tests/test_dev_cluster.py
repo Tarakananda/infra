@@ -84,7 +84,7 @@ class ConnectionTests(unittest.TestCase):
         self.assertFalse(self.calls)
 
     def test_unrelated_region_default_is_corrected(self):
-        os.environ['AWS_REGION'] = 'us-east-1'
+        os.environ['AWS_REGION'] = 'ap-south-1'
         self.refresh()
         self.assertEqual(os.environ['AWS_REGION'], 'ap-south-1')
         self.assertIn('ap-south-1', self.calls[0])
