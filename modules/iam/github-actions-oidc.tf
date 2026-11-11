@@ -48,8 +48,8 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       values = [
         "repo:Tarakananda@83879016/frontend-application@1450082187:ref:refs/heads/main",
         "repo:Tarakananda@83879016/frontend-application@1450082187:ref:refs/heads/develop",
-        "repo:${var.github_org}/backend-devops:ref:refs/heads/main",
-        "repo:${var.github_org}/backend-devops:ref:refs/heads/develop",
+        "repo:Tarakananda@83879016/backend-pharma@1453646069:ref:refs/heads/main",
+        "repo:Tarakananda@83879016/backend-pharma@1453646069:ref:refs/heads/develop",
       ]
     }
   }
