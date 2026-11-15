@@ -17,18 +17,18 @@ variable "github_org" {
 }
 
 variable "backup_retention_period" {
-  description = "Days to retain automated RDS backups; use a short retention period for the dev free-plan account"
+  description = "Days to retain automated RDS backups; use a short retention period for the QA free-plan account"
   type        = number
   default     = 1
 
   validation {
     condition     = var.backup_retention_period == 1
-    error_message = "The dev practice profile keeps one day of backups for this account's free-plan restriction."
+    error_message = "The QA practice profile keeps one day of backups for this account's free-plan restriction."
   }
 }
 
 variable "eks_admin_principal_arns" {
-  description = "Additional IAM user/role ARNs allowed to administer the dev cluster (for example your local CLI identity). Do not use STS session ARNs."
+  description = "Additional IAM user/role ARNs allowed to administer the QA cluster (for example your local CLI identity). Do not use STS session ARNs."
   type        = set(string)
   default     = []
 

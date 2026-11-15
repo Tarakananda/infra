@@ -27,3 +27,9 @@ variable "github_org" {
   description = "GitHub organization or username that owns frontend and backend"
   type        = string
 }
+
+variable "existing_github_oidc_provider_arn" {
+  description = "Reuse an account-level GitHub OIDC provider owned by another state; null creates one."
+  type        = string
+  default     = null
+}

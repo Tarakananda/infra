@@ -48,12 +48,9 @@ module "rds" {
   backup_retention_period    = var.backup_retention_period
 }
 
-module "ecr" {
-  source = "../../modules/ecr"
-
-  project = local.project
-  env     = local.env
-  repositories = [
+# Shared image repositories are owned by dev; QA only reads them.
+data "aws_ecr_repository" "shared" {
+  for_each = toset([
     "api-gateway",
     "auth-service",
     "drug-catalog-service",
@@ -63,18 +60,24 @@ module "ecr" {
     "pharma-ui",
     "supplier-service",
     "qc-service",
-  ]
+  ])
+  name = each.value
+}
+
+data "aws_iam_openid_connect_provider" "github_actions" {
+  url = "https://token.actions.githubusercontent.com"
 }
 
 module "iam" {
   source = "../../modules/iam"
 
-  project           = local.project
-  env               = local.env
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_provider_url = module.eks.cluster_oidc_issuer_url
-  aws_account_id    = data.aws_caller_identity.current.account_id
-  github_org        = var.github_org
+  project                           = local.project
+  env                               = local.env
+  oidc_provider_arn                 = module.eks.oidc_provider_arn
+  oidc_provider_url                 = module.eks.cluster_oidc_issuer_url
+  aws_account_id                    = data.aws_caller_identity.current.account_id
+  github_org                        = var.github_org
+  existing_github_oidc_provider_arn = data.aws_iam_openid_connect_provider.github_actions.arn
 }
 
 module "secrets_manager" {
