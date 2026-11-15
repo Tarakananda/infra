@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Check the reviewed dev capacity profile, not the usage-dependent AWS bill.
+"""Check the reviewed dev/QA capacity profile, not the usage-dependent AWS bill.
 
 Usage: terraform show -json tfplan | python3 ../../scripts/check_practice_plan.py
 The plan contains secrets: consume stdin and never echo its values.
 """
 from datetime import date
+import argparse
 import json
 import sys
 
@@ -18,7 +19,9 @@ def resources(module):
         yield from resources(child)
 
 
-def check_plan(plan, today=None):
+def check_plan(plan, today=None, environment="dev"):
+    if environment not in ("dev", "qa"):
+        return ["Only dev and qa environments are supported."]
     errors = []
     items = list(resources(plan.get("planned_values", {}).get("root_module", {})))
 
@@ -34,7 +37,7 @@ def check_plan(plan, today=None):
     region = plan.get("configuration", {}).get("provider_config", {}).get("aws", {}).get("expressions", {}).get("region", {}).get("constant_value")
     expect(region == "ap-south-1", "Use the reviewed ap-south-1 region.")
     cluster = exactly_one("aws_eks_cluster")
-    expect(cluster.get("name") == "pharma-dev-cluster", "Only the dev cluster is allowed.")
+    expect(cluster.get("name") == f"pharma-{environment}-cluster", f"Only the {environment} cluster is allowed.")
     expect(cluster.get("version") == VERSION, f"Review support dates and pricing before changing EKS {VERSION}.")
     expect((today or date.today()) < STANDARD_SUPPORT_END, "EKS version support review is due; update the practice profile before applying.")
     expect(cluster.get("upgrade_policy") == [{"support_type": "STANDARD"}], "EKS extended support must be disabled.")
@@ -51,7 +54,7 @@ def check_plan(plan, today=None):
     disk = (disks[0].get("ebs") or [{}])[0] if len(disks) == 1 else {}
     expect(disk.get("volume_size") == 20 and disk.get("volume_type") == "gp3", "Use one 20 GiB gp3 worker disk.")
     db = exactly_one("aws_db_instance")
-    expect(db.get("identifier") == "pharma-dev-postgres", "Only the dev database is allowed.")
+    expect(db.get("identifier") == f"pharma-{environment}-postgres", f"Only the {environment} database is allowed.")
     expect(db.get("instance_class") == "db.t3.micro" and db.get("multi_az") is False, "Use single-AZ db.t3.micro.")
     expect(db.get("allocated_storage") == 20 and db.get("max_allocated_storage") == 0 and db.get("storage_type") == "gp3", "RDS must use 20 GiB gp3 without storage autoscaling.")
     expect(db.get("backup_retention_period") == 1, "Keep the account-compatible one-day RDS backup retention.")
@@ -82,7 +85,10 @@ def check_plan(plan, today=None):
 
 
 def main():
-    errors = check_plan(json.load(sys.stdin))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--environment", choices=("dev", "qa"), default="dev")
+    args = parser.parse_args()
+    errors = check_plan(json.load(sys.stdin), environment=args.environment)
     if errors:
         for error in errors:
             print("Practice profile check failed: " + error, file=sys.stderr)

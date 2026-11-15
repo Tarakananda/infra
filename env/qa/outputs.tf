@@ -23,5 +23,5 @@ output "eso_role_arn" {
 
 output "connect_command" {
   description = "Run on your own computer after every apply/recreation"
-  value       = "python3 scripts/connect_dev.py"
+  value       = "aws eks update-kubeconfig --region ${local.region} --name ${module.eks.cluster_name} --alias pharma-qa --user-alias pharma-qa"
 }
